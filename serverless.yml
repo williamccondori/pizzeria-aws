@@ -1,0 +1,39 @@
+service: pedirPizzas
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  stage: stage, 'dev'
+  region: region, 'us-east-2'
+  #memorySize: 128
+  #timeout: 3
+  lambdaHashingVersion: 20201221
+  profile: developer
+
+  environment:
+    REGION: ${self:provider.region}
+    PENDING_ORDER_QUEUE:
+      Ref: PendingOrdersQueue
+
+# se definen las funciones lambda
+
+functions:
+  hacerPedido:
+    handler: handler.hacerPedido
+    description: realiza el pedido
+    #runtime: nodejs10.x
+    #memorySize: 128
+    #timeout: 3
+    events:
+      - http:
+          path: pedido
+          method: post
+          #cors: true
+          #private: true
+
+resources:
+  Resources:
+    PendingOrdersQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: "PendingOrdersQueue"
