@@ -14,12 +14,24 @@ provider:
     REGION: ${self:provider.region}
     PENDING_ORDER_QUEUE:
       Ref: PendingOrdersQueue
+    PENDING_ORDER_QUEUE_NAME: PendingOrdersQueue
+    COMPLETED_ORDER_TABLE: CompletedOrderTable
 
   iamRoleStatements:
+    # se definen los permisos para la cola sqs
     - Effect: "Allow"
       Action:
         - "sqs:SendMessage"
       Resource: "arn:aws:sqs:${self.provider.region}:*:PendingOrdersQueue"
+
+      # se definen los permisos para la tabla en dynamodb
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:GetItem"
+        - "dynamodb:PutItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+      Resource: "arn:aws:dynamodb:${self.provider.region}:*:table/${self.provider.environment.COMPLETED_ORDER_TABLE}"
 
 # se definen las funciones lambda
 
@@ -36,10 +48,40 @@ functions:
           method: post
           #cors: true
           #private: true
+  prepararPedido:
+    handler: handler.prepararPedido
+    description: prepara el pedido desde la cola
+    #runtime: nodejs10.x
+    #memorySize: 128
+    #timeout: 3
+    events:
+      - sqs:
+          batchSize: 1
+          maximumRetryAttempts: 10
+          arn:
+            Fn::GetAtt:
+              - PendingOrdersQueue
+              - Arn
 
 resources:
   Resources:
+    # definicion de la cola en sqs
     PendingOrdersQueue:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: "PendingOrdersQueue"
+
+    # definicion de la tabla para dynamodb
+    CompletedOrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        KeySchema:
+          - AttributeName: "orderId"
+            KeyType: "HASH"
+        AttributeDefinitions:
+          - AttributeName: "orderId"
+            AttributeType: "S"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.COMPLETED_ORDER_TABLE}
