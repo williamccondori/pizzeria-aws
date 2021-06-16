@@ -3,8 +3,8 @@ service: pedirPizzas
 provider:
   name: aws
   runtime: nodejs10.x
-  stage: stage, 'dev'
-  region: region, 'us-east-2'
+  #stage: stage, 'dev'
+  region: "us-east-1"
   #memorySize: 128
   #timeout: 3
   lambdaHashingVersion: 20201221
@@ -22,7 +22,7 @@ provider:
     - Effect: "Allow"
       Action:
         - "sqs:SendMessage"
-      Resource: "arn:aws:sqs:${self.provider.region}:*:PendingOrdersQueue"
+      Resource: "arn:aws:sqs:${self:provider.region}:*:PendingOrdersQueue"
 
       # se definen los permisos para la tabla en dynamodb
     - Effect: "Allow"
@@ -31,7 +31,7 @@ provider:
         - "dynamodb:PutItem"
         - "dynamodb:UpdateItem"
         - "dynamodb:DeleteItem"
-      Resource: "arn:aws:dynamodb:${self.provider.region}:*:table/${self.provider.environment.COMPLETED_ORDER_TABLE}"
+      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.COMPLETED_ORDER_TABLE}"
 
 # se definen las funciones lambda
 

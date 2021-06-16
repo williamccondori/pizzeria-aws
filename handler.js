@@ -6,12 +6,12 @@ const AWS = require("aws-sdk");
 const orderMetadataManager = require("./orderMetadataManager");
 
 var sqs = new AWS.SQS({
-  region: process.env.PENDING_ORDER_QUEUE,
+  region: process.env.REGION,
 });
 
 const QUEUE_URL = process.env.PENDING_ORDER_QUEUE;
 
-module.exports.hacerPedido = async (event, context, callback) => {
+module.exports.hacerPedido = (event, _, callback) => {
   console.log(`hacerPedido fue llamado`);
 
   const body = JSON.parse(event.body);
@@ -19,7 +19,7 @@ module.exports.hacerPedido = async (event, context, callback) => {
   const orderId = uuidv1.v1();
 
   const order = {
-    orderId,
+    orderId: orderId,
     name: body.name,
     address: body.address,
     pizzas: body.pizzas,
@@ -36,7 +36,7 @@ module.exports.hacerPedido = async (event, context, callback) => {
       sendResponse(500, err, callback);
     } else {
       const message = {
-        orderId,
+        orderId: orderId,
         messageId: data.messageId,
       };
       sendResponse(200, message, callback);
@@ -63,7 +63,7 @@ module.exports.prepararPedido = (event, _, callback) => {
 
 function sendResponse(statusCode, message, callback) {
   const response = {
-    statusCode,
+    statusCode: statusCode,
     body: JSON.stringify(message),
   };
   callback(null, response);
